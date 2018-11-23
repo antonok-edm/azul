@@ -3022,152 +3022,165 @@ mod css_tests {
     }
 
     #[test]
-    fn test_parse_linear_gradient_1() {
-        assert_eq!(parse_css_background("linear-gradient(red, yellow)"),
+    fn test_parse_background_1() {
+        assert_eq!(css_grammar::cssbackground("linear-gradient(red, yellow)"),
             Ok(StyleBackground::LinearGradient(LinearGradientPreInfo {
                 direction: Direction::FromTo(DirectionCorner::Top, DirectionCorner::Bottom),
                 extend_mode: ExtendMode::Clamp,
                 stops: vec![GradientStopPre {
-                    offset: Some(PercentageValue::new(0.0)),
+                    offset: None,
                     color: ColorU { r: 255, g: 0, b: 0, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(100.0)),
+                    offset: None,
                     color: ColorU { r: 255, g: 255, b: 0, a: 255 },
                 }],
             })));
     }
 
     #[test]
-    fn test_parse_linear_gradient_2() {
-        assert_eq!(parse_css_background("linear-gradient(red, lime, blue, yellow)"),
+    fn test_parse_background_2() {
+        assert_eq!(css_grammar::cssbackground("linear-gradient(red, lime, blue, yellow)"),
             Ok(StyleBackground::LinearGradient(LinearGradientPreInfo {
                 direction: Direction::FromTo(DirectionCorner::Top, DirectionCorner::Bottom),
                 extend_mode: ExtendMode::Clamp,
                 stops: vec![GradientStopPre {
-                    offset: Some(PercentageValue::new(0.0)),
+                    offset: None,
                     color: ColorU { r: 255, g: 0, b: 0, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(33.333332)),
+                    offset: None,
                     color: ColorU { r: 0, g: 255, b: 0, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(66.666664)),
+                    offset: None,
                     color: ColorU { r: 0, g: 0, b: 255, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(99.9999)), // note: not 100%, but close enough
+                    offset: None,
                     color: ColorU { r: 255, g: 255, b: 0, a: 255 },
                 }],
         })));
     }
 
     #[test]
-    fn test_parse_linear_gradient_3() {
-        assert_eq!(parse_css_background("repeating-linear-gradient(50deg, blue, yellow, #00FF00)"),
+    fn test_parse_background_3() {
+        assert_eq!(css_grammar::cssbackground("repeating-linear-gradient(50deg, blue, yellow, #00FF00)"),
             Ok(StyleBackground::LinearGradient(LinearGradientPreInfo {
                 direction: Direction::Angle(50.0.into()),
                 extend_mode: ExtendMode::Repeat,
                 stops: vec![
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(0.0)),
+                    offset: None,
                     color: ColorU { r: 0, g: 0, b: 255, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(50.0)),
+                    offset: None,
                     color: ColorU { r: 255, g: 255, b: 0, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(100.0)),
+                    offset: None,
                     color: ColorU { r: 0, g: 255, b: 0, a: 255 },
                 }],
         })));
     }
 
     #[test]
-    fn test_parse_linear_gradient_4() {
-        assert_eq!(parse_css_background("linear-gradient(to bottom right, red, yellow)"),
+    fn test_parse_background_4() {
+        assert_eq!(css_grammar::cssbackground("linear-gradient(to bottom right, red, yellow)"),
             Ok(StyleBackground::LinearGradient(LinearGradientPreInfo {
                 direction: Direction::FromTo(DirectionCorner::TopLeft, DirectionCorner::BottomRight),
                 extend_mode: ExtendMode::Clamp,
                 stops: vec![GradientStopPre {
-                    offset: Some(PercentageValue::new(0.0)),
+                    offset: None,
                     color: ColorU { r: 255, g: 0, b: 0, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(100.0)),
+                    offset: None,
                     color: ColorU { r: 255, g: 255, b: 0, a: 255 },
                 }],
             })));
     }
 
     #[test]
-    fn test_parse_linear_gradient_5() {
-        assert_eq!(parse_css_background("linear-gradient(0.42rad, red, yellow)"),
+    fn test_parse_background_5() {
+        assert_eq!(css_grammar::cssbackground("linear-gradient(0.42rad, red, yellow)"),
             Ok(StyleBackground::LinearGradient(LinearGradientPreInfo {
                 direction: Direction::Angle(FloatValue::new(24.0642)),
                 extend_mode: ExtendMode::Clamp,
                 stops: vec![GradientStopPre {
-                    offset: Some(PercentageValue::new(0.0)),
+                    offset: None,
                     color: ColorU { r: 255, g: 0, b: 0, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(100.0)),
+                    offset: None,
                     color: ColorU { r: 255, g: 255, b: 0, a: 255 },
                 }],
         })));
     }
 
     #[test]
-    fn test_parse_linear_gradient_6() {
-        assert_eq!(parse_css_background("linear-gradient(12.93grad, red, yellow)"),
+    fn test_parse_background_6() {
+        assert_eq!(css_grammar::cssbackground("linear-gradient(12.93grad, red, yellow)"),
             Ok(StyleBackground::LinearGradient(LinearGradientPreInfo {
                 direction: Direction::Angle(FloatValue::new(11.637)),
                 extend_mode: ExtendMode::Clamp,
                 stops: vec![GradientStopPre {
-                    offset: Some(PercentageValue::new(0.0)),
+                    offset: None,
                     color: ColorU { r: 255, g: 0, b: 0, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(100.0)),
+                    offset: None,
                     color: ColorU { r: 255, g: 255, b: 0, a: 255 },
                 }],
         })));
     }
 
     #[test]
-    fn test_parse_linear_gradient_7() {
-        assert_eq!(parse_css_background("linear-gradient(10deg, rgb(10, 30, 20), yellow)"),
+    fn test_parse_background_7() {
+        assert_eq!(css_grammar::cssbackground("linear-gradient(10deg, rgb(10, 30, 20), yellow 50%)"),
             Ok(StyleBackground::LinearGradient(LinearGradientPreInfo {
                 direction: Direction::Angle(FloatValue::new(10.0)),
                 extend_mode: ExtendMode::Clamp,
                 stops: vec![GradientStopPre {
-                    offset: Some(PercentageValue::new(0.0)),
+                    offset: None,
                     color: ColorU { r: 10, g: 30, b: 20, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(100.0)),
+                    offset: Some(PercentageValue::new(50.0)),
                     color: ColorU { r: 255, g: 255, b: 0, a: 255 },
                 }],
         })));
     }
 
     #[test]
-    fn test_parse_linear_gradient_8() {
-        assert_eq!(parse_css_background("linear-gradient(50deg, rgb(10, 30, 20, 0.93), hsla(40deg, 80%, 30%, 0.1))"),
+    fn test_parse_background_8() {
+        assert_eq!(css_grammar::cssbackground("linear-gradient(5083.3grad, rgb(10, 30, 20) 10.09%, hsla(40deg, 80%, 30%, 0.1), red 30%, rgba(19, 20, 21, 0.93))"),
             Ok(StyleBackground::LinearGradient(LinearGradientPreInfo {
-                direction: Direction::Angle(FloatValue::new(40.0)),
+                direction: Direction::Angle(FloatValue::new(254.9697)),
                 extend_mode: ExtendMode::Clamp,
                 stops: vec![GradientStopPre {
-                    offset: Some(PercentageValue::new(0.0)),
-                    color: ColorU { r: 10, g: 30, b: 20, a: 238 },
+                    offset: Some(PercentageValue::new(10.09)),
+                    color: ColorU { r: 10, g: 30, b: 20, a: 255 },
                 },
                 GradientStopPre {
-                    offset: Some(PercentageValue::new(100.0)),
-                    color: ColorU { r: 138, g: 97, b: 15, a: 25 },
+                    offset: None,
+                    color: ColorU { r: 138, g: 97, b: 15, a: 24 },
+                },
+                GradientStopPre {
+                    offset: Some(PercentageValue::new(30.0)),
+                    color: ColorU { r: 255, g: 0, b: 0, a: 255 },
+                },
+                GradientStopPre {
+                    offset: None,
+                    color: ColorU { r: 19, g: 20, b: 21, a: 237 },
                 }],
         })));
+    }
+
+    #[test]
+    fn test_parse_background_9() {
+        assert_eq!(css_grammar::cssbackground("none"), Ok(StyleBackground::NoBackground));
     }
 
     #[test]

@@ -1,6 +1,8 @@
-use super::{hsl_to_rgb, parse_color_builtin, ColorU};
+use super::{hsl_to_rgb, parse_color_builtin, ColorU, StyleBackground, GradientStopPre, Direction, ExtendMode, PercentageValue, FloatValue, LinearGradientPreInfo, DirectionCorner};
 
 optspace = #quiet<[ \n\t]+>*
+space = #quiet<[ \n\t]+>+
+comma_sep = optspace "," optspace
 
 hex1digit -> u8
     = d:$([a-fA-F0-9]) {?
@@ -8,7 +10,6 @@ hex1digit -> u8
             Ok(d) => Ok(d * 17),
             Err(_) => Err("Component must be in the range [0-F]"),
         }
-        //Ok(u8::from_str_radix(d, 16).unwrap() * 17)
     }
 
 hex2digit -> u8
@@ -17,7 +18,6 @@ hex2digit -> u8
             Ok(d) => Ok(d),
             Err(_) => Err("Component must be in the range [00-FF]"),
         }
-        //Ok(u8::from_str_radix(d, 16).unwrap())
     }
 
 hexcolor3 -> ColorU
@@ -49,7 +49,6 @@ uint8 -> u8
             Ok(u) => Ok(u),
             Err(_) => Err("Component must be in the range [0-255]"),
         }
-        //u.parse().unwrap()
     }
 
 float -> f32
@@ -58,7 +57,6 @@ float -> f32
             Ok(f) => Ok(f),
             Err(_) => Err("Could not parse number as valid float"),
         }
-        //f.parse().unwrap()
     }
 
 alpha -> u8
@@ -71,18 +69,22 @@ alpha -> u8
     }
 
 rgbcolor -> ColorU
-    = "rgb" optspace "(" optspace r:uint8 optspace "," optspace g:uint8 optspace "," optspace b:uint8 optspace ")" {
+    = "rgb(" optspace r:uint8 comma_sep g:uint8 comma_sep b:uint8 optspace ")" {
         ColorU { r, g, b, a: 255 }
     }
 
 rgbacolor -> ColorU
-    = "rgba" optspace "(" optspace r:uint8 optspace "," optspace g:uint8 optspace "," optspace b:uint8 optspace "," optspace a:alpha optspace ")" {
+    = "rgba(" optspace r:uint8 comma_sep g:uint8 comma_sep b:uint8 comma_sep a:alpha optspace ")" {
         ColorU {r, g, b, a }
     }
 
 angle -> f32
-    = a: (angle_deg / angle_grad / angle_rad) {
-        a % 360.0
+    = deg: (angle_deg / angle_grad / angle_rad) {
+        let mut deg = deg % 360.0;
+        if deg < 0.0 {
+            deg += 360.0;
+        }
+        deg
     }
 
 angle_deg -> f32
@@ -106,13 +108,13 @@ percent -> f32
     }
 
 hslcolor -> ColorU
-    = "hsl" optspace "(" optspace h:angle optspace "," optspace s:percent optspace "," optspace l:percent optspace ")" {
+    = "hsl(" optspace h:angle comma_sep s:percent comma_sep l:percent optspace ")" {
         let (r, g, b) = hsl_to_rgb(h, s, l);
         ColorU { r, g, b, a: 255 }
     }
 
 hslacolor -> ColorU
-    = "hsla" optspace "(" optspace h:angle optspace "," optspace s:percent optspace "," optspace l:percent optspace "," optspace a:alpha optspace ")" {
+    = "hsla(" optspace h:angle comma_sep s:percent comma_sep l:percent comma_sep a:alpha optspace ")" {
         let (r, g, b) = hsl_to_rgb(h, s, l);
         ColorU { r, g, b, a }
     }
@@ -123,8 +125,81 @@ builtincolor -> ColorU
             Ok(c) => Ok(c),
             Err(_) => Err("Unknown color"),
         }
-        //parse_color_builtin(input).unwrap()
     }
 
+/// Parses any string CSS color into a ColorU object
 pub csscolor -> ColorU
     = hexcolor / rgbcolor / rgbacolor / hslcolor / hslacolor / builtincolor
+
+/// Parses any string CSS color into a StyleBackground object
+pub cssbackground -> StyleBackground
+    = nobackground / linear_gradient //... repeating_linear_gradient / radial_gradient / repeating_radial_gradient / image
+
+nobackground -> StyleBackground
+    = "none" {
+        StyleBackground::NoBackground
+    }
+
+linear_gradient -> StyleBackground
+    = repeat:"repeating-"? "linear-gradient(" optspace d:(d:gradient_direction comma_sep {d})? firststop:gradient_stop comma_sep morestops:gradient_stop++ comma_sep ")" {
+        let extend_mode = match repeat {
+            Some(_) => ExtendMode::Repeat,
+            None => ExtendMode::Clamp,
+        };
+        let mut stops = vec![firststop];
+        morestops.iter().for_each(|stop| stops.push(*stop));
+        let direction = match d {
+            Some(d) => d,
+            None => Direction::FromTo(DirectionCorner::Top, DirectionCorner::Bottom),
+        };
+        StyleBackground::LinearGradient(LinearGradientPreInfo {
+            direction,
+            extend_mode,
+            stops
+        })
+    }
+
+gradient_direction -> Direction
+    = gradient_corner / (a:angle { Direction::Angle(FloatValue::new(a)) })
+
+gradient_corner -> Direction
+    = "to" space first:rectangle_side second:(space s:rectangle_side {s})? {?
+        match second {
+            None => {
+                Ok(Direction::FromTo(first.opposite(), first))
+            }
+            Some(second) => {
+                match first.combine(&second) {
+                    Some(end) => Ok(Direction::FromTo(end.opposite(), end)),
+                    None => Err("Could not combine corner arguments".into()),
+                }
+            }
+        }
+    }
+
+rectangle_side -> DirectionCorner
+    = left / right / bottom / top
+
+left -> DirectionCorner
+    = "left" { DirectionCorner::Left }
+
+right -> DirectionCorner
+    = "right" { DirectionCorner::Right }
+
+bottom -> DirectionCorner
+    = "bottom" { DirectionCorner::Bottom }
+
+top -> DirectionCorner
+    = "top" { DirectionCorner::Top }
+
+gradient_stop -> GradientStopPre
+    = color:csscolor optspace p:percent? {
+        let offset = match p {
+            Some(p) => Some(PercentageValue::new(p)),
+            None => None
+        };
+        GradientStopPre {
+            offset,
+            color,
+        }
+    }
