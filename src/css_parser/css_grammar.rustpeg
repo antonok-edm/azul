@@ -1,0 +1,130 @@
+use super::{hsl_to_rgb, parse_color_builtin, ColorU};
+
+optspace = #quiet<[ \n\t]+>*
+
+hex1digit -> u8
+    = d:$([a-fA-F0-9]) {?
+        match u8::from_str_radix(d, 16) {
+            Ok(d) => Ok(d * 17),
+            Err(_) => Err("Component must be in the range [0-F]"),
+        }
+        //Ok(u8::from_str_radix(d, 16).unwrap() * 17)
+    }
+
+hex2digit -> u8
+    = d:$([a-fA-F0-9]*<2>) {?
+        match u8::from_str_radix(d, 16) {
+            Ok(d) => Ok(d),
+            Err(_) => Err("Component must be in the range [00-FF]"),
+        }
+        //Ok(u8::from_str_radix(d, 16).unwrap())
+    }
+
+hexcolor3 -> ColorU
+    = "#" r:hex1digit g:hex1digit b:hex1digit {
+        ColorU { r, g, b, a: 255 }
+    }
+
+hexcolor4 -> ColorU
+    = "#" r:hex1digit g:hex1digit b:hex1digit a:hex1digit {
+        ColorU { r, g, b, a }
+    }
+
+hexcolor6 -> ColorU
+    = "#" r:hex2digit g:hex2digit b:hex2digit {
+        ColorU { r, g, b, a: 255 }
+    }
+
+hexcolor8 -> ColorU
+    = "#" r:hex2digit g:hex2digit b:hex2digit a:hex2digit {
+        ColorU { r, g, b, a }
+    }
+
+hexcolor -> ColorU
+    = hexcolor8 / hexcolor6 / hexcolor4 / hexcolor3
+
+uint8 -> u8
+    = u:$([0-9]*<1,3>) {?
+        match u.parse() {
+            Ok(u) => Ok(u),
+            Err(_) => Err("Component must be in the range [0-255]"),
+        }
+        //u.parse().unwrap()
+    }
+
+float -> f32
+    = f:$("-"? [0-9]+ "."? [0-9]* / "-"? [0-9]* "."? [0-9]+) {?
+        match f.parse() {
+            Ok(f) => Ok(f),
+            Err(_) => Err("Could not parse number as valid float"),
+        }
+        //f.parse().unwrap()
+    }
+
+alpha -> u8
+    = f:float {?
+        if f > 1.0 || f < 0.0 {
+            Err("Alpha must be in the range [0.0-1.0]")
+        } else {
+            Ok((f * 256.0 - 1.0) as u8)
+        }
+    }
+
+rgbcolor -> ColorU
+    = "rgb" optspace "(" optspace r:uint8 optspace "," optspace g:uint8 optspace "," optspace b:uint8 optspace ")" {
+        ColorU { r, g, b, a: 255 }
+    }
+
+rgbacolor -> ColorU
+    = "rgba" optspace "(" optspace r:uint8 optspace "," optspace g:uint8 optspace "," optspace b:uint8 optspace "," optspace a:alpha optspace ")" {
+        ColorU {r, g, b, a }
+    }
+
+angle -> f32
+    = a: (angle_deg / angle_grad / angle_rad) {
+        a % 360.0
+    }
+
+angle_deg -> f32
+    = d:float optspace "deg" {
+        d
+    }
+
+angle_grad -> f32
+    = d:float optspace "grad" {
+        d / 400.0 * 360.0
+    }
+
+angle_rad -> f32
+    = d:float optspace "rad" {
+        d * 180.0 / std::f32::consts::PI
+    }
+
+percent -> f32
+    = p:float optspace "%" {
+        p.max(0.0).min(100.0)
+    }
+
+hslcolor -> ColorU
+    = "hsl" optspace "(" optspace h:angle optspace "," optspace s:percent optspace "," optspace l:percent optspace ")" {
+        let (r, g, b) = hsl_to_rgb(h, s, l);
+        ColorU { r, g, b, a: 255 }
+    }
+
+hslacolor -> ColorU
+    = "hsla" optspace "(" optspace h:angle optspace "," optspace s:percent optspace "," optspace l:percent optspace "," optspace a:alpha optspace ")" {
+        let (r, g, b) = hsl_to_rgb(h, s, l);
+        ColorU { r, g, b, a }
+    }
+
+builtincolor -> ColorU
+    = input:$([a-zA-z\-]*) {?
+        match parse_color_builtin(input) {
+            Ok(c) => Ok(c),
+            Err(_) => Err("Unknown color"),
+        }
+        //parse_color_builtin(input).unwrap()
+    }
+
+pub csscolor -> ColorU
+    = hexcolor / rgbcolor / rgbacolor / hslcolor / hslacolor / builtincolor

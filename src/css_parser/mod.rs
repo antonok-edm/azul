@@ -1,5 +1,9 @@
 //! Contains utilities to convert strings (CSS strings) to servo types
 
+mod css_grammar {
+    include!(concat!(env!("OUT_DIR"), "/css_grammar.rs"));
+}
+
 use std::{fmt, num::{ParseIntError, ParseFloatError}};
 pub use {
     app_units::Au,
@@ -801,162 +805,162 @@ fn parse_css_text_color<'a>(input: &'a str)
 /// Parse a built-in background color
 ///
 /// "blue" -> "00FF00" -> ColorF { r: 0, g: 255, b: 0 })
-fn parse_color_builtin<'a>(input: &'a str)
+pub fn parse_color_builtin<'a>(input: &'a str)
 -> Result<ColorU, CssColorParseError<'a>>
 {
-    let color = match input {
-        "AliceBlue"              | "alice-blue"                 =>  "F0F8FF",
-        "AntiqueWhite"           | "antique-white"              =>  "FAEBD7",
-        "Aqua"                   | "aqua"                       =>  "00FFFF",
-        "Aquamarine"             | "aquamarine"                 =>  "7FFFD4",
-        "Azure"                  | "azure"                      =>  "F0FFFF",
-        "Beige"                  | "beige"                      =>  "F5F5DC",
-        "Bisque"                 | "bisque"                     =>  "FFE4C4",
-        "Black"                  | "black"                      =>  "000000",
-        "BlanchedAlmond"         | "blanched-almond"            =>  "FFEBCD",
-        "Blue"                   | "blue"                       =>  "0000FF",
-        "BlueViolet"             | "blue-violet"                =>  "8A2BE2",
-        "Brown"                  | "brown"                      =>  "A52A2A",
-        "BurlyWood"              | "burly-wood"                 =>  "DEB887",
-        "CadetBlue"              | "cadet-blue"                 =>  "5F9EA0",
-        "Chartreuse"             | "chartreuse"                 =>  "7FFF00",
-        "Chocolate"              | "chocolate"                  =>  "D2691E",
-        "Coral"                  | "coral"                      =>  "FF7F50",
-        "CornflowerBlue"         | "cornflower-blue"            =>  "6495ED",
-        "Cornsilk"               | "cornsilk"                   =>  "FFF8DC",
-        "Crimson"                | "crimson"                    =>  "DC143C",
-        "Cyan"                   | "cyan"                       =>  "00FFFF",
-        "DarkBlue"               | "dark-blue"                  =>  "00008B",
-        "DarkCyan"               | "dark-cyan"                  =>  "008B8B",
-        "DarkGoldenRod"          | "dark-golden-rod"            =>  "B8860B",
-        "DarkGray"               | "dark-gray"                  =>  "A9A9A9",
-        "DarkGrey"               | "dark-grey"                  =>  "A9A9A9",
-        "DarkGreen"              | "dark-green"                 =>  "006400",
-        "DarkKhaki"              | "dark-khaki"                 =>  "BDB76B",
-        "DarkMagenta"            | "dark-magenta"               =>  "8B008B",
-        "DarkOliveGreen"         | "dark-olive-green"           =>  "556B2F",
-        "DarkOrange"             | "dark-orange"                =>  "FF8C00",
-        "DarkOrchid"             | "dark-orchid"                =>  "9932CC",
-        "DarkRed"                | "dark-red"                   =>  "8B0000",
-        "DarkSalmon"             | "dark-salmon"                =>  "E9967A",
-        "DarkSeaGreen"           | "dark-sea-green"             =>  "8FBC8F",
-        "DarkSlateBlue"          | "dark-slate-blue"            =>  "483D8B",
-        "DarkSlateGray"          | "dark-slate-gray"            =>  "2F4F4F",
-        "DarkSlateGrey"          | "dark-slate-grey"            =>  "2F4F4F",
-        "DarkTurquoise"          | "dark-turquoise"             =>  "00CED1",
-        "DarkViolet"             | "dark-violet"                =>  "9400D3",
-        "DeepPink"               | "deep-pink"                  =>  "FF1493",
-        "DeepSkyBlue"            | "deep-sky-blue"              =>  "00BFFF",
-        "DimGray"                | "dim-gray"                   =>  "696969",
-        "DimGrey"                | "dim-grey"                   =>  "696969",
-        "DodgerBlue"             | "dodger-blue"                =>  "1E90FF",
-        "FireBrick"              | "fire-brick"                 =>  "B22222",
-        "FloralWhite"            | "floral-white"               =>  "FFFAF0",
-        "ForestGreen"            | "forest-green"               =>  "228B22",
-        "Fuchsia"                | "fuchsia"                    =>  "FF00FF",
-        "Gainsboro"              | "gainsboro"                  =>  "DCDCDC",
-        "GhostWhite"             | "ghost-white"                =>  "F8F8FF",
-        "Gold"                   | "gold"                       =>  "FFD700",
-        "GoldenRod"              | "golden-rod"                 =>  "DAA520",
-        "Gray"                   | "gray"                       =>  "808080",
-        "Grey"                   | "grey"                       =>  "808080",
-        "Green"                  | "green"                      =>  "008000",
-        "GreenYellow"            | "green-yellow"               =>  "ADFF2F",
-        "HoneyDew"               | "honey-dew"                  =>  "F0FFF0",
-        "HotPink"                | "hot-pink"                   =>  "FF69B4",
-        "IndianRed"              | "indian-red"                 =>  "CD5C5C",
-        "Indigo"                 | "indigo"                     =>  "4B0082",
-        "Ivory"                  | "ivory"                      =>  "FFFFF0",
-        "Khaki"                  | "khaki"                      =>  "F0E68C",
-        "Lavender"               | "lavender"                   =>  "E6E6FA",
-        "LavenderBlush"          | "lavender-blush"             =>  "FFF0F5",
-        "LawnGreen"              | "lawn-green"                 =>  "7CFC00",
-        "LemonChiffon"           | "lemon-chiffon"              =>  "FFFACD",
-        "LightBlue"              | "light-blue"                 =>  "ADD8E6",
-        "LightCoral"             | "light-coral"                =>  "F08080",
-        "LightCyan"              | "light-cyan"                 =>  "E0FFFF",
-        "LightGoldenRodYellow"   | "light-golden-rod-yellow"    =>  "FAFAD2",
-        "LightGray"              | "light-gray"                 =>  "D3D3D3",
-        "LightGrey"              | "light-grey"                 =>  "D3D3D3",
-        "LightGreen"             | "light-green"                =>  "90EE90",
-        "LightPink"              | "light-pink"                 =>  "FFB6C1",
-        "LightSalmon"            | "light-salmon"               =>  "FFA07A",
-        "LightSeaGreen"          | "light-sea-green"            =>  "20B2AA",
-        "LightSkyBlue"           | "light-sky-blue"             =>  "87CEFA",
-        "LightSlateGray"         | "light-slate-gray"           =>  "778899",
-        "LightSlateGrey"         | "light-slate-grey"           =>  "778899",
-        "LightSteelBlue"         | "light-steel-blue"           =>  "B0C4DE",
-        "LightYellow"            | "light-yellow"               =>  "FFFFE0",
-        "Lime"                   | "lime"                       =>  "00FF00",
-        "LimeGreen"              | "lime-green"                 =>  "32CD32",
-        "Linen"                  | "linen"                      =>  "FAF0E6",
-        "Magenta"                | "magenta"                    =>  "FF00FF",
-        "Maroon"                 | "maroon"                     =>  "800000",
-        "MediumAquaMarine"       | "medium-aqua-marine"         =>  "66CDAA",
-        "MediumBlue"             | "medium-blue"                =>  "0000CD",
-        "MediumOrchid"           | "medium-orchid"              =>  "BA55D3",
-        "MediumPurple"           | "medium-purple"              =>  "9370DB",
-        "MediumSeaGreen"         | "medium-sea-green"           =>  "3CB371",
-        "MediumSlateBlue"        | "medium-slate-blue"          =>  "7B68EE",
-        "MediumSpringGreen"      | "medium-spring-green"        =>  "00FA9A",
-        "MediumTurquoise"        | "medium-turquoise"           =>  "48D1CC",
-        "MediumVioletRed"        | "medium-violet-red"          =>  "C71585",
-        "MidnightBlue"           | "midnight-blue"              =>  "191970",
-        "MintCream"              | "mint-cream"                 =>  "F5FFFA",
-        "MistyRose"              | "misty-rose"                 =>  "FFE4E1",
-        "Moccasin"               | "moccasin"                   =>  "FFE4B5",
-        "NavajoWhite"            | "navajo-white"               =>  "FFDEAD",
-        "Navy"                   | "navy"                       =>  "000080",
-        "OldLace"                | "old-lace"                   =>  "FDF5E6",
-        "Olive"                  | "olive"                      =>  "808000",
-        "OliveDrab"              | "olive-drab"                 =>  "6B8E23",
-        "Orange"                 | "orange"                     =>  "FFA500",
-        "OrangeRed"              | "orange-red"                 =>  "FF4500",
-        "Orchid"                 | "orchid"                     =>  "DA70D6",
-        "PaleGoldenRod"          | "pale-golden-rod"            =>  "EEE8AA",
-        "PaleGreen"              | "pale-green"                 =>  "98FB98",
-        "PaleTurquoise"          | "pale-turquoise"             =>  "AFEEEE",
-        "PaleVioletRed"          | "pale-violet-red"            =>  "DB7093",
-        "PapayaWhip"             | "papaya-whip"                =>  "FFEFD5",
-        "PeachPuff"              | "peach-puff"                 =>  "FFDAB9",
-        "Peru"                   | "peru"                       =>  "CD853F",
-        "Pink"                   | "pink"                       =>  "FFC0CB",
-        "Plum"                   | "plum"                       =>  "DDA0DD",
-        "PowderBlue"             | "powder-blue"                =>  "B0E0E6",
-        "Purple"                 | "purple"                     =>  "800080",
-        "RebeccaPurple"          | "rebecca-purple"             =>  "663399",
-        "Red"                    | "red"                        =>  "FF0000",
-        "RosyBrown"              | "rosy-brown"                 =>  "BC8F8F",
-        "RoyalBlue"              | "royal-blue"                 =>  "4169E1",
-        "SaddleBrown"            | "saddle-brown"               =>  "8B4513",
-        "Salmon"                 | "salmon"                     =>  "FA8072",
-        "SandyBrown"             | "sandy-brown"                =>  "F4A460",
-        "SeaGreen"               | "sea-green"                  =>  "2E8B57",
-        "SeaShell"               | "sea-shell"                  =>  "FFF5EE",
-        "Sienna"                 | "sienna"                     =>  "A0522D",
-        "Silver"                 | "silver"                     =>  "C0C0C0",
-        "SkyBlue"                | "sky-blue"                   =>  "87CEEB",
-        "SlateBlue"              | "slate-blue"                 =>  "6A5ACD",
-        "SlateGray"              | "slate-gray"                 =>  "708090",
-        "SlateGrey"              | "slate-grey"                 =>  "708090",
-        "Snow"                   | "snow"                       =>  "FFFAFA",
-        "SpringGreen"            | "spring-green"               =>  "00FF7F",
-        "SteelBlue"              | "steel-blue"                 =>  "4682B4",
-        "Tan"                    | "tan"                        =>  "D2B48C",
-        "Teal"                   | "teal"                       =>  "008080",
-        "Thistle"                | "thistle"                    =>  "D8BFD8",
-        "Tomato"                 | "tomato"                     =>  "FF6347",
-        "Turquoise"              | "turquoise"                  =>  "40E0D0",
-        "Violet"                 | "violet"                     =>  "EE82EE",
-        "Wheat"                  | "wheat"                      =>  "F5DEB3",
-        "White"                  | "white"                      =>  "FFFFFF",
-        "WhiteSmoke"             | "white-smoke"                =>  "F5F5F5",
-        "Yellow"                 | "yellow"                     =>  "FFFF00",
-        "YellowGreen"            | "yellow-green"               =>  "9ACD32",
-        "Transparent"            | "transparent"                =>  "FFFFFF00",
+    let (r, g, b, a) = match input {
+        "AliceBlue"             | "alice-blue"                =>  (240,248,255,255),
+        "AntiqueWhite"          | "antique-white"             =>  (250,235,215,255),
+        "Aqua"                  | "aqua"                      =>  (  0,255,255,255),
+        "Aquamarine"            | "aquamarine"                =>  (127,255,212,255),
+        "Azure"                 | "azure"                     =>  (240,255,255,255),
+        "Beige"                 | "beige"                     =>  (245,245,220,255),
+        "Bisque"                | "bisque"                    =>  (255,228,196,255),
+        "Black"                 | "black"                     =>  (  0,  0,  0,255),
+        "BlanchedAlmond"        | "blanched-almond"           =>  (255,235,205,255),
+        "Blue"                  | "blue"                      =>  (  0,  0,255,255),
+        "BlueViolet"            | "blue-violet"               =>  (138, 43,226,255),
+        "Brown"                 | "brown"                     =>  (165, 42, 42,255),
+        "BurlyWood"             | "burly-wood"                =>  (222,184,135,255),
+        "CadetBlue"             | "cadet-blue"                =>  ( 95,158,160,255),
+        "Chartreuse"            | "chartreuse"                =>  (127,255,  0,255),
+        "Chocolate"             | "chocolate"                 =>  (210,105, 30,255),
+        "Coral"                 | "coral"                     =>  (255,127, 80,255),
+        "CornflowerBlue"        | "cornflower-blue"           =>  (100,149,237,255),
+        "Cornsilk"              | "cornsilk"                  =>  (255,248,220,255),
+        "Crimson"               | "crimson"                   =>  (220, 20, 60,255),
+        "Cyan"                  | "cyan"                      =>  (  0,255,255,255),
+        "DarkBlue"              | "dark-blue"                 =>  (  0,  0,139,255),
+        "DarkCyan"              | "dark-cyan"                 =>  (  0,139,139,255),
+        "DarkGoldenRod"         | "dark-golden-rod"           =>  (184,134, 11,255),
+        "DarkGray"              | "dark-gray"                 =>  (169,169,169,255),
+        "DarkGrey"              | "dark-grey"                 =>  (169,169,169,255),
+        "DarkGreen"             | "dark-green"                =>  (  0,100,  0,255),
+        "DarkKhaki"             | "dark-khaki"                =>  (189,183,107,255),
+        "DarkMagenta"           | "dark-magenta"              =>  (139,  0,139,255),
+        "DarkOliveGreen"        | "dark-olive-green"          =>  ( 85,107, 47,255),
+        "DarkOrange"            | "dark-orange"               =>  (255,140,  0,255),
+        "DarkOrchid"            | "dark-orchid"               =>  (153, 50,204,255),
+        "DarkRed"               | "dark-red"                  =>  (139,  0,  0,255),
+        "DarkSalmon"            | "dark-salmon"               =>  (233,150,122,255),
+        "DarkSeaGreen"          | "dark-sea-green"            =>  (143,188,143,255),
+        "DarkSlateBlue"         | "dark-slate-blue"           =>  ( 72, 61,139,255),
+        "DarkSlateGray"         | "dark-slate-gray"           =>  ( 47, 79, 79,255),
+        "DarkSlateGrey"         | "dark-slate-grey"           =>  ( 47, 79, 79,255),
+        "DarkTurquoise"         | "dark-turquoise"            =>  (  0,206,209,255),
+        "DarkViolet"            | "dark-violet"               =>  (148,  0,211,255),
+        "DeepPink"              | "deep-pink"                 =>  (255, 20,147,255),
+        "DeepSkyBlue"           | "deep-sky-blue"             =>  (  0,191,255,255),
+        "DimGray"               | "dim-gray"                  =>  (105,105,105,255),
+        "DimGrey"               | "dim-grey"                  =>  (105,105,105,255),
+        "DodgerBlue"            | "dodger-blue"               =>  ( 30,144,255,255),
+        "FireBrick"             | "fire-brick"                =>  (178, 34, 34,255),
+        "FloralWhite"           | "floral-white"              =>  (255,250,240,255),
+        "ForestGreen"           | "forest-green"              =>  ( 34,139, 34,255),
+        "Fuchsia"               | "fuchsia"                   =>  (255,  0,255,255),
+        "Gainsboro"             | "gainsboro"                 =>  (220,220,220,255),
+        "GhostWhite"            | "ghost-white"               =>  (248,248,255,255),
+        "Gold"                  | "gold"                      =>  (255,215,  0,255),
+        "GoldenRod"             | "golden-rod"                =>  (218,165, 32,255),
+        "Gray"                  | "gray"                      =>  (128,128,128,255),
+        "Grey"                  | "grey"                      =>  (128,128,128,255),
+        "Green"                 | "green"                     =>  (  0,128,  0,255),
+        "GreenYellow"           | "green-yellow"              =>  (173,255, 47,255),
+        "HoneyDew"              | "honey-dew"                 =>  (240,255,240,255),
+        "HotPink"               | "hot-pink"                  =>  (255,105,180,255),
+        "IndianRed"             | "indian-red"                =>  (205, 92, 92,255),
+        "Indigo"                | "indigo"                    =>  ( 75,  0,130,255),
+        "Ivory"                 | "ivory"                     =>  (255,255,240,255),
+        "Khaki"                 | "khaki"                     =>  (240,230,140,255),
+        "Lavender"              | "lavender"                  =>  (230,230,250,255),
+        "LavenderBlush"         | "lavender-blush"            =>  (255,240,245,255),
+        "LawnGreen"             | "lawn-green"                =>  (124,252,  0,255),
+        "LemonChiffon"          | "lemon-chiffon"             =>  (255,250,205,255),
+        "LightBlue"             | "light-blue"                =>  (173,216,230,255),
+        "LightCoral"            | "light-coral"               =>  (240,128,128,255),
+        "LightCyan"             | "light-cyan"                =>  (224,255,255,255),
+        "LightGoldenRodYellow"  | "light-golden-rod-yellow"   =>  (250,250,210,255),
+        "LightGray"             | "light-gray"                =>  (211,211,211,255),
+        "LightGrey"             | "light-grey"                =>  (144,238,144,255),
+        "LightGreen"            | "light-green"               =>  (211,211,211,255),
+        "LightPink"             | "light-pink"                =>  (255,182,193,255),
+        "LightSalmon"           | "light-salmon"              =>  (255,160,122,255),
+        "LightSeaGreen"         | "light-sea-green"           =>  ( 32,178,170,255),
+        "LightSkyBlue"          | "light-sky-blue"            =>  (135,206,250,255),
+        "LightSlateGray"        | "light-slate-gray"          =>  (119,136,153,255),
+        "LightSlateGrey"        | "light-slate-grey"          =>  (119,136,153,255),
+        "LightSteelBlue"        | "light-steel-blue"          =>  (176,196,222,255),
+        "LightYellow"           | "light-yellow"              =>  (255,255,224,255),
+        "Lime"                  | "lime"                      =>  (  0,255,  0,255),
+        "LimeGreen"             | "lime-green"                =>  ( 50,205, 50,255),
+        "Linen"                 | "linen"                     =>  (250,240,230,255),
+        "Magenta"               | "magenta"                   =>  (255,  0,255,255),
+        "Maroon"                | "maroon"                    =>  (128,  0,  0,255),
+        "MediumAquaMarine"      | "medium-aqua-marine"        =>  (102,205,170,255),
+        "MediumBlue"            | "medium-blue"               =>  (  0,  0,205,255),
+        "MediumOrchid"          | "medium-orchid"             =>  (186, 85,211,255),
+        "MediumPurple"          | "medium-purple"             =>  (147,112,219,255),
+        "MediumSeaGreen"        | "medium-sea-green"          =>  ( 60,179,113,255),
+        "MediumSlateBlue"       | "medium-slate-blue"         =>  (123,104,238,255),
+        "MediumSpringGreen"     | "medium-spring-green"       =>  (  0,250,154,255),
+        "MediumTurquoise"       | "medium-turquoise"          =>  ( 72,209,204,255),
+        "MediumVioletRed"       | "medium-violet-red"         =>  (199, 21,133,255),
+        "MidnightBlue"          | "midnight-blue"             =>  ( 25, 25,112,255),
+        "MintCream"             | "mint-cream"                =>  (245,255,250,255),
+        "MistyRose"             | "misty-rose"                =>  (255,228,225,255),
+        "Moccasin"              | "moccasin"                  =>  (255,228,181,255),
+        "NavajoWhite"           | "navajo-white"              =>  (255,222,173,255),
+        "Navy"                  | "navy"                      =>  (  0,  0,128,255),
+        "OldLace"               | "old-lace"                  =>  (253,245,230,255),
+        "Olive"                 | "olive"                     =>  (128,128,  0,255),
+        "OliveDrab"             | "olive-drab"                =>  (107,142, 35,255),
+        "Orange"                | "orange"                    =>  (255,165,  0,255),
+        "OrangeRed"             | "orange-red"                =>  (255, 69,  0,255),
+        "Orchid"                | "orchid"                    =>  (218,112,214,255),
+        "PaleGoldenRod"         | "pale-golden-rod"           =>  (238,232,170,255),
+        "PaleGreen"             | "pale-green"                =>  (152,251,152,255),
+        "PaleTurquoise"         | "pale-turquoise"            =>  (175,238,238,255),
+        "PaleVioletRed"         | "pale-violet-red"           =>  (219,112,147,255),
+        "PapayaWhip"            | "papaya-whip"               =>  (255,239,213,255),
+        "PeachPuff"             | "peach-puff"                =>  (255,218,185,255),
+        "Peru"                  | "peru"                      =>  (205,133, 63,255),
+        "Pink"                  | "pink"                      =>  (255,192,203,255),
+        "Plum"                  | "plum"                      =>  (221,160,221,255),
+        "PowderBlue"            | "powder-blue"               =>  (176,224,230,255),
+        "Purple"                | "purple"                    =>  (128,  0,128,255),
+        "RebeccaPurple"         | "rebecca-purple"            =>  (102, 51,153,255),
+        "Red"                   | "red"                       =>  (255,  0,  0,255),
+        "RosyBrown"             | "rosy-brown"                =>  (188,143,143,255),
+        "RoyalBlue"             | "royal-blue"                =>  ( 65,105,225,255),
+        "SaddleBrown"           | "saddle-brown"              =>  (139, 69, 19,255),
+        "Salmon"                | "salmon"                    =>  (250,128,114,255),
+        "SandyBrown"            | "sandy-brown"               =>  (244,164, 96,255),
+        "SeaGreen"              | "sea-green"                 =>  ( 46,139, 87,255),
+        "SeaShell"              | "sea-shell"                 =>  (255,245,238,255),
+        "Sienna"                | "sienna"                    =>  (160, 82, 45,255),
+        "Silver"                | "silver"                    =>  (192,192,192,255),
+        "SkyBlue"               | "sky-blue"                  =>  (135,206,235,255),
+        "SlateBlue"             | "slate-blue"                =>  (106, 90,205,255),
+        "SlateGray"             | "slate-gray"                =>  (112,128,144,255),
+        "SlateGrey"             | "slate-grey"                =>  (112,128,144,255),
+        "Snow"                  | "snow"                      =>  (255,250,250,255),
+        "SpringGreen"           | "spring-green"              =>  (  0,255,127,255),
+        "SteelBlue"             | "steel-blue"                =>  ( 70,130,180,255),
+        "Tan"                   | "tan"                       =>  (210,180,140,255),
+        "Teal"                  | "teal"                      =>  (  0,128,128,255),
+        "Thistle"               | "thistle"                   =>  (216,191,216,255),
+        "Tomato"                | "tomato"                    =>  (255, 99, 71,255),
+        "Turquoise"             | "turquoise"                 =>  ( 64,224,208,255),
+        "Violet"                | "violet"                    =>  (238,130,238,255),
+        "Wheat"                 | "wheat"                     =>  (245,222,179,255),
+        "White"                 | "white"                     =>  (255,255,255,255),
+        "WhiteSmoke"            | "white-smoke"               =>  (245,245,245,255),
+        "Yellow"                | "yellow"                    =>  (255,255,  0,255),
+        "YellowGreen"           | "yellow-green"              =>  (154,205, 50,255),
+        "Transparent"           | "transparent"               =>  (255,255,255,  0),
         _ => { return Err(CssColorParseError::InvalidColor(input)); }
     };
-    parse_color_no_hash(color)
+    Ok(ColorU { r, g, b, a })
 }
 
 /// Parse a color of the form 'rgb([0-255], [0-255], [0-255])', or 'rgba([0-255], [0-255], [0-255],
@@ -1018,6 +1022,39 @@ fn parse_color_hsl<'a>(input: &'a str, parse_alpha: bool)
     Ok(ColorU { a, ..rgb_color })
 }
 
+/// Converts the hue, saturation, and lightness components of a color into
+/// red, green, and blue components.
+/// Hue is an angle from 0.0 to 360.0
+/// Saturation is a percentage from 0.0 to 100.0
+/// Lightness is a percentage from 0.0 to 100.0
+/// Adapted from [https://en.wikipedia.org/wiki/HSL_and_HSV#Converting_to_RGB]
+#[inline]
+fn hsl_to_rgb<'a>(h: f32, s: f32, l: f32) -> (u8, u8, u8) {
+    let s = s / 100.0;
+    let l = l / 100.0;
+    let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
+    let h = h / 60.0;
+    let x = c * (1.0 - ((h % 2.0) - 1.0).abs());
+    let (r1, g1, b1) = match h as u8 {
+        0 => (c, x, 0.0),
+        1 => (x, c, 0.0),
+        2 => (0.0, c, x),
+        3 => (0.0, x, c),
+        4 => (x, 0.0, c),
+        5 => (c, 0.0, x),
+        _ => {
+            println!("h is {}", h);
+            unreachable!();
+        }
+    };
+    let m = l - c / 2.0;
+    (
+        ((r1 + m) * 256.0).min(255.0) as u8,
+        ((g1 + m) * 256.0).min(255.0) as u8,
+        ((b1 + m) * 256.0).min(255.0) as u8,
+    )
+}
+
 /// Parse the color components passed as arguments to an hsl(...) CSS color.
 fn parse_color_hsl_components<'a>(components: &mut Iterator<Item = &'a str>)
 -> Result<ColorU, CssColorParseError<'a>>
@@ -1048,34 +1085,6 @@ fn parse_color_hsl_components<'a>(components: &mut Iterator<Item = &'a str>)
         parse_percentage(c)
             .ok_or(CssColorParseError::InvalidPercentage(c))
             .and_then(|p| Ok(p.get()))
-    }
-
-    /// Adapted from [https://en.wikipedia.org/wiki/HSL_and_HSV#Converting_to_RGB]
-    #[inline]
-    fn hsl_to_rgb<'a>(h: f32, s: f32, l: f32) -> (u8, u8, u8) {
-        let s = s / 100.0;
-        let l = l / 100.0;
-        let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
-        let h = h / 60.0;
-        let x = c * (1.0 - ((h % 2.0) - 1.0).abs());
-        let (r1, g1, b1) = match h as u8 {
-            0 => (c, x, 0.0),
-            1 => (x, c, 0.0),
-            2 => (0.0, c, x),
-            3 => (0.0, x, c),
-            4 => (x, 0.0, c),
-            5 => (c, 0.0, x),
-            _ => {
-                println!("h is {}", h);
-                unreachable!();
-            }
-        };
-        let m = l - c / 2.0;
-        (
-            ((r1 + m) * 256.0).min(255.0) as u8,
-            ((g1 + m) * 256.0).min(255.0) as u8,
-            ((b1 + m) * 256.0).min(255.0) as u8,
-        )
     }
 
     let (h, s, l) = (
@@ -2097,7 +2106,7 @@ fn strip_quotes<'a>(input: &'a str) -> Result<QuoteStripped<'a>, UnclosedQuotesE
 #[derive(Debug, Clone, PartialEq)]
 pub enum CssGradientStopParseError<'a> {
     Error(&'a str),
-    ColorParseError(CssColorParseError<'a>),
+    ColorParseError(css_grammar::ParseError),
 }
 
 impl_display!{ CssGradientStopParseError<'a>, {
@@ -2117,7 +2126,7 @@ fn parse_gradient_stop<'a>(input: &'a str)
 {
     let mut input_iter = input.split_whitespace();
     let first_item = input_iter.next().ok_or(CssGradientStopParseError::Error(input))?;
-    let color = parse_css_color(first_item).map_err(|e| CssGradientStopParseError::ColorParseError(e))?;
+    let color = css_grammar::csscolor(first_item).map_err(|e| CssGradientStopParseError::ColorParseError(e))?;
     let second_item = match input_iter.next() {
         None => return Ok(GradientStopPre { offset: None, color: color }),
         Some(s) => s,
@@ -3005,6 +3014,14 @@ mod css_tests {
     }
 
     #[test]
+    fn test_parse_direction() {
+        let first_input = "60.9grad";
+        let e = FloatValue::new(first_input.split("grad").next().unwrap().parse::<f32>().expect("Parseable float") / 400.0 * 360.0);
+        assert_eq!(e, FloatValue::new(60.9 / 400.0 * 360.0));
+        assert_eq!(parse_direction("60.9grad"), Ok(Direction::Angle(FloatValue::new(60.9 / 400.0 * 360.0))));
+    }
+
+    #[test]
     fn test_parse_linear_gradient_1() {
         assert_eq!(parse_css_background("linear-gradient(red, yellow)"),
             Ok(StyleBackground::LinearGradient(LinearGradientPreInfo {
@@ -3206,190 +3223,259 @@ mod css_tests {
 
     #[test]
     fn test_parse_css_color_1() {
-        assert_eq!(parse_css_color("#F0F8FF"), Ok(ColorU { r: 240, g: 248, b: 255, a: 255 }));
+        assert_eq!(css_grammar::csscolor("#F0F8FF"), Ok(ColorU { r: 240, g: 248, b: 255, a: 255 }));
     }
 
     #[test]
     fn test_parse_css_color_2() {
-        assert_eq!(parse_css_color("#F0F8FF00"), Ok(ColorU { r: 240, g: 248, b: 255, a: 0 }));
+        assert_eq!(css_grammar::csscolor("#F0F8FF00"), Ok(ColorU { r: 240, g: 248, b: 255, a: 0 }));
     }
 
     #[test]
     fn test_parse_css_color_3() {
-        assert_eq!(parse_css_color("#EEE"), Ok(ColorU { r: 238, g: 238, b: 238, a: 255 }));
+        assert_eq!(css_grammar::csscolor("#EEE"), Ok(ColorU { r: 238, g: 238, b: 238, a: 255 }));
     }
 
     #[test]
     fn test_parse_css_color_4() {
-        assert_eq!(parse_css_color("rgb(192, 14, 12)"), Ok(ColorU { r: 192, g: 14, b: 12, a: 255 }));
+        assert_eq!(css_grammar::csscolor("rgb(192, 14, 12)"), Ok(ColorU { r: 192, g: 14, b: 12, a: 255 }));
     }
 
     #[test]
     fn test_parse_css_color_5() {
-        assert_eq!(parse_css_color("rgb(283, 8, 105)"), Err(CssColorParseError::IntValueParseErr("283".parse::<u8>().err().unwrap())));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("Component must be in the range [0-255]");
+        assert_eq!(css_grammar::csscolor("rgb(283, 8, 105)"), Err(css_grammar::ParseError { line: 1, column: 8, offset: 7, expected }));
     }
 
     #[test]
     fn test_parse_css_color_6() {
-        assert_eq!(parse_css_color("rgba(192, 14, 12, 80)"), Err(CssColorParseError::FloatValueOutOfRange(80.0)));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("Alpha must be in the range [0.0-1.0]");
+        expected.insert(".");
+        expected.insert("[0-9]");
+        assert_eq!(css_grammar::csscolor("rgba(192, 14, 12, 80)"), Err(css_grammar::ParseError { line: 1, column: 21, offset: 20, expected }));
     }
 
     #[test]
     fn test_parse_css_color_7() {
-        assert_eq!(parse_css_color("rgba( 0,127,     255   , 0.25  )"), Ok(ColorU { r: 0, g: 127, b: 255, a: 64 }));
+        assert_eq!(css_grammar::csscolor("rgba( 0,127,     255   , 0.25  )"), Ok(ColorU { r: 0, g: 127, b: 255, a: 63 }));
     }
 
     #[test]
     fn test_parse_css_color_8() {
-        assert_eq!(parse_css_color("rgba( 1 ,2,3, 1.0)"), Ok(ColorU { r: 1, g: 2, b: 3, a: 255 }));
+        assert_eq!(css_grammar::csscolor("rgba( 1 ,2,3, 1.0)"), Ok(ColorU { r: 1, g: 2, b: 3, a: 255 }));
     }
 
     #[test]
     fn test_parse_css_color_9() {
-        assert_eq!(parse_css_color("rgb("), Err(CssColorParseError::UnclosedColor("rgb(")));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        assert_eq!(css_grammar::csscolor("rgb("), Err(css_grammar::ParseError { line: 1, column: 5, offset: 4, expected }));
     }
 
     #[test]
     fn test_parse_css_color_10() {
-        assert_eq!(parse_css_color("rgba("), Err(CssColorParseError::UnclosedColor("rgba(")));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        assert_eq!(css_grammar::csscolor("rgba("), Err(css_grammar::ParseError { line: 1, column: 6, offset: 5, expected }));
     }
 
     #[test]
     fn test_parse_css_color_11() {
-        assert_eq!(parse_css_color("rgba(123, 36, 92, 0.375"), Err(CssColorParseError::UnclosedColor("rgba(123, 36, 92, 0.375")));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        expected.insert(")");
+        assert_eq!(css_grammar::csscolor("rgba(123, 36, 92, 0.375"), Err(css_grammar::ParseError { line: 1, column: 24, offset: 23, expected }));
     }
 
     #[test]
     fn test_parse_css_color_12() {
-        assert_eq!(parse_css_color("rgb()"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Red)));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        assert_eq!(css_grammar::csscolor("rgb()"), Err(css_grammar::ParseError { line: 1, column: 5, offset: 4, expected }));
     }
 
     #[test]
     fn test_parse_css_color_13() {
-        assert_eq!(parse_css_color("rgb(10)"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Green)));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert(",");
+        expected.insert("[0-9]");
+        assert_eq!(css_grammar::csscolor("rgb(10)"), Err(css_grammar::ParseError { line: 1, column: 7, offset: 6, expected }));
     }
 
     #[test]
     fn test_parse_css_color_14() {
-        assert_eq!(parse_css_color("rgb(20, 30)"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Blue)));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert(",");
+        expected.insert("[0-9]");
+        assert_eq!(css_grammar::csscolor("rgb(20, 30)"), Err(css_grammar::ParseError { line: 1, column: 11, offset: 10, expected }));
     }
 
     #[test]
     fn test_parse_css_color_15() {
-        assert_eq!(parse_css_color("rgb(30, 40,)"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Blue)));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        assert_eq!(css_grammar::csscolor("rgb(30, 40,)"), Err(css_grammar::ParseError { line: 1, column: 12, offset: 11, expected }));
     }
 
     #[test]
     fn test_parse_css_color_16() {
-        assert_eq!(parse_css_color("rgba(40, 50, 60)"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Alpha)));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        expected.insert(",");
+        assert_eq!(css_grammar::csscolor("rgba(40, 50, 60)"), Err(css_grammar::ParseError { line: 1, column: 16, offset: 15, expected }));
     }
 
     #[test]
     fn test_parse_css_color_17() {
-        assert_eq!(parse_css_color("rgba(50, 60, 70, )"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Alpha)));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        expected.insert(".");
+        expected.insert("-");
+        assert_eq!(css_grammar::csscolor("rgba(50, 60, 70, )"), Err(css_grammar::ParseError { line: 1, column: 18, offset: 17, expected }));
     }
 
     #[test]
     fn test_parse_css_color_18() {
-        assert_eq!(parse_css_color("hsl(0deg, 100%, 100%)"), Ok(ColorU { r: 255, g: 255, b: 255, a: 255 }));
+        assert_eq!(css_grammar::csscolor("hsl(0deg, 100%, 100%)"), Ok(ColorU { r: 255, g: 255, b: 255, a: 255 }));
     }
 
     #[test]
     fn test_parse_css_color_19() {
-        assert_eq!(parse_css_color("hsl(0deg, 100%, 50%)"), Ok(ColorU { r: 255, g: 0, b: 0, a: 255 }));
+        assert_eq!(css_grammar::csscolor("hsl(0deg, 100%, 50%)"), Ok(ColorU { r: 255, g: 0, b: 0, a: 255 }));
     }
 
     #[test]
     fn test_parse_css_color_20() {
-        assert_eq!(parse_css_color("hsl(170deg, 50%, 75%)"), Ok(ColorU { r: 160, g: 224, b: 213, a: 255 }));
+        assert_eq!(css_grammar::csscolor("hsl(170deg, 50%, 75%)"), Ok(ColorU { r: 160, g: 224, b: 213, a: 255 }));
     }
 
     #[test]
     fn test_parse_css_color_21() {
-        assert_eq!(parse_css_color("hsla(190deg, 50%, 75%, 1.0)"), Ok(ColorU { r: 160, g: 213, b: 224, a: 255 }));
+        assert_eq!(css_grammar::csscolor("hsla(190deg, 50%, 75%, 1.0)"), Ok(ColorU { r: 160, g: 213, b: 224, a: 255 }));
     }
 
     #[test]
     fn test_parse_css_color_22() {
-        assert_eq!(parse_css_color("hsla(120deg, 0%, 25%, 0.25)"), Ok(ColorU { r: 64, g: 64, b: 64, a: 64 }));
+        assert_eq!(css_grammar::csscolor("hsla(120deg, 0%, 25%, 0.25)"), Ok(ColorU { r: 64, g: 64, b: 64, a: 63 }));
     }
 
     #[test]
     fn test_parse_css_color_23() {
-        assert_eq!(parse_css_color("hsla(120deg, 0%, 0%, 0.5)"), Ok(ColorU { r: 0, g: 0, b: 0, a: 128 }));
+        assert_eq!(css_grammar::csscolor("hsla(120deg, 0%, 0%, 0.5)"), Ok(ColorU { r: 0, g: 0, b: 0, a: 127 }));
     }
 
     #[test]
     fn test_parse_css_color_24() {
-        assert_eq!(parse_css_color("hsla(60.9deg, 80.3%, 40%, 0.5)"), Ok(ColorU { r: 182, g: 184, b: 20, a: 128 }));
+        assert_eq!(css_grammar::csscolor("hsla(60.9deg, 80.3%, 40%, 0.5)"), Ok(ColorU { r: 182, g: 184, b: 20, a: 127 }));
     }
 
     #[test]
     fn test_parse_css_color_25() {
-        assert_eq!(parse_css_color("hsla(60.9rad, 80.3%, 40%, 0.5)"), Ok(ColorU { r: 45, g: 20, b: 184, a: 128 }));
+        assert_eq!(css_grammar::csscolor("hsla(60.9rad, 80.3%, 40%, 0.5)"), Ok(ColorU { r: 45, g: 20, b: 184, a: 127 }));
     }
 
     #[test]
     fn test_parse_css_color_26() {
-        assert_eq!(parse_css_color("hsla(60.9grad, 80.3%, 40%, 0.5)"), Ok(ColorU { r: 184, g: 170, b: 20, a: 128 }));
-    }
-
-    #[test]
-    fn test_parse_direction() {
-        let first_input = "60.9grad";
-        let e = FloatValue::new(first_input.split("grad").next().unwrap().parse::<f32>().expect("Parseable float") / 400.0 * 360.0);
-        assert_eq!(e, FloatValue::new(60.9 / 400.0 * 360.0));
-        assert_eq!(parse_direction("60.9grad"), Ok(Direction::Angle(FloatValue::new(60.9 / 400.0 * 360.0))));
-    }
-
-    #[test]
-    fn test_parse_float_value() {
-        assert_eq!(parse_float_value("60.9"), Ok(FloatValue::new(60.9)));
+        assert_eq!(css_grammar::csscolor("hsla(60.9grad, 80.3%, 40%, 0.5)"), Ok(ColorU { r: 184, g: 170, b: 20, a: 127 }));
     }
 
     #[test]
     fn test_parse_css_color_27() {
-        assert_eq!(parse_css_color("hsla(240, 0%, 0%, 0.5)"), Err(CssColorParseError::DirectionParseError(parse_direction("240").err().unwrap())));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("deg");
+        expected.insert("rad");
+        expected.insert("grad");
+        expected.insert(".");
+        expected.insert("[0-9]");
+        assert_eq!(css_grammar::csscolor("hsla(240, 0%, 0%, 0.5)"), Err(css_grammar::ParseError{ line: 1, column: 9, offset: 8, expected }));
     }
 
     #[test]
     fn test_parse_css_color_28() {
-        assert_eq!(parse_css_color("hsla(240deg, 0, 0%, 0.5)"), Err(CssColorParseError::InvalidPercentage("0")));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("%");
+        expected.insert(".");
+        expected.insert("[0-9]");
+        assert_eq!(css_grammar::csscolor("hsla(240deg, 0, 0%, 0.5)"), Err(css_grammar::ParseError{ line: 1, column: 15, offset: 14, expected }));
     }
 
     #[test]
     fn test_parse_css_color_29() {
-        assert_eq!(parse_css_color("hsla(240deg, 0%, 0, 0.5)"), Err(CssColorParseError::InvalidPercentage("0")));
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("%");
+        expected.insert(".");
+        expected.insert("[0-9]");
+        assert_eq!(css_grammar::csscolor("hsla(240deg, 0%, 0, 0.5)"), Err(css_grammar::ParseError{ line: 1, column: 19, offset: 18, expected }));
     }
 
     #[test]
     fn test_parse_css_color_30() {
-        assert_eq!(parse_css_color("hsla(240deg, 0%, 0%, )"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Alpha)))
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        expected.insert(".");
+        expected.insert("-");
+        assert_eq!(css_grammar::csscolor("hsla(240deg, 0%, 0%, )"), Err(css_grammar::ParseError{ line: 1, column: 22, offset: 21, expected }))
     }
 
     #[test]
     fn test_parse_css_color_31() {
-        assert_eq!(parse_css_color("hsl(, 0%, 0%, )"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Hue)))
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        expected.insert(".");
+        expected.insert("-");
+        assert_eq!(css_grammar::csscolor("hsl(, 0%, 0%, )"), Err(css_grammar::ParseError{ line: 1, column: 5, offset: 4, expected }))
     }
 
     #[test]
     fn test_parse_css_color_32() {
-        assert_eq!(parse_css_color("hsl(240deg ,  )"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Saturation)))
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        expected.insert(".");
+        expected.insert("-");
+        assert_eq!(css_grammar::csscolor("hsl(240deg ,  )"), Err(css_grammar::ParseError{ line: 1, column: 15, offset: 14, expected }))
     }
 
     #[test]
     fn test_parse_css_color_33() {
-        assert_eq!(parse_css_color("hsl(240deg, 0%,  )"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Lightness)))
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("[0-9]");
+        expected.insert(".");
+        expected.insert("-");
+        assert_eq!(css_grammar::csscolor("hsl(240deg, 0%,  )"), Err(css_grammar::ParseError{ line: 1, column: 18, offset: 17, expected }))
     }
 
     #[test]
     fn test_parse_css_color_34() {
-        assert_eq!(parse_css_color("hsl(240deg, 0%, 0%,  )"), Err(CssColorParseError::ExtraArguments("")))
+        let mut expected = std::collections::HashSet::new();
+        expected.insert(")");
+        assert_eq!(css_grammar::csscolor("hsl(240deg, 0%, 0%,  )"), Err(css_grammar::ParseError{ line: 1, column: 19, offset: 18, expected }))
     }
 
     #[test]
     fn test_parse_css_color_35() {
-        assert_eq!(parse_css_color("hsla(240deg, 0%, 0%  )"), Err(CssColorParseError::MissingColorComponent(CssColorComponent::Alpha)))
+        let mut expected = std::collections::HashSet::new();
+        expected.insert(",");
+        assert_eq!(css_grammar::csscolor("hsla(240deg, 0%, 0%  )"), Err(css_grammar::ParseError{ line: 1, column: 22, offset: 21, expected }))
+    }
+
+    #[test]
+    fn test_parse_css_color_36() {
+        assert_eq!(css_grammar::csscolor("lime"), Ok(ColorU { r: 0, g: 255, b: 0, a: 255 }))
+    }
+
+    #[test]
+    fn test_parse_css_color_37() {
+        assert_eq!(css_grammar::csscolor("RebeccaPurple"), Ok(ColorU { r: 102, g: 51, b: 153, a: 255 }))
+    }
+
+    #[test]
+    fn test_parse_css_color_38() {
+        let mut expected = std::collections::HashSet::new();
+        expected.insert("Unknown color");
+        expected.insert("[a-zA-z-]");
+        assert_eq!(css_grammar::csscolor("not-a-color"), Err(css_grammar::ParseError{ line: 1, column: 12, offset: 11, expected }))
     }
 
     #[test]
